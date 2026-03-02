@@ -10,8 +10,34 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = 3001;
 
-app.use(cors({ origin: ['http://localhost:8080', 'http://localhost:8081', 'http://localhost:5173'] }));
+const allowedOrigins = [
+  'http://localhost:8080',
+  'http://localhost:8081',
+  'http://localhost:5173',
+  'https://sylvialarke.github.io',
+];
+app.use(cors({
+  origin: (origin, callback) => {
+    // allow requests with no origin (e.g. curl, Postman during local dev)
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    callback(new Error('Not allowed by CORS'));
+  },
+}));
 app.use(express.json({ limit: '10mb' }));
+
+// Simple rate limiter — max 10 submissions per IP per minute
+const rateLimits = new Map();
+function rateLimit(req, res, next) {
+  const ip = req.ip;
+  const now = Date.now();
+  const windowMs = 60 * 1000;
+  const max = 10;
+  const recent = (rateLimits.get(ip) || []).filter(t => now - t < windowMs);
+  recent.push(now);
+  rateLimits.set(ip, recent);
+  if (recent.length > max) return res.status(429).json({ error: 'Too many requests. Please wait a moment.' });
+  next();
+}
 
 const attendees = new Map();
 const checkedIn = [];
@@ -47,14 +73,14 @@ app.get('/api/checked-in/stream', (req, res) => {
   req.on('close', () => sseClients.delete(res));
 });
 
-app.post('/api/attendees', (req, res) => {
+app.post('/api/attendees', rateLimit, (req, res) => {
   totalAttendees += 1;
   writeFileSync(counterFile, JSON.stringify({ count: totalAttendees }));
   attendees.set(req.body.email, { ...req.body, attendeeNumber: totalAttendees });
   res.json({ success: true, attendeeNumber: totalAttendees });
 });
 
-app.post('/api/sign-waiver', (req, res) => {
+app.post('/api/sign-waiver', rateLimit, (req, res) => {
   const { email, signature_svg, furniture_acknowledged } = req.body;
 
   const attendee = attendees.get(email);

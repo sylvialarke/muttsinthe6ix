@@ -6,3 +6,6 @@ waivers/
 CLAUDE.md
 CLAUDE.html
 CLAUDE.pdf
+.env
+.env.production
+.env.local

@@ -23,7 +23,7 @@ const CheckInForm = () => {
   const { toast } = useCustomToast();
 
   useEffect(() => {
-    fetch('http://localhost:3001/api/attendee-count')
+    fetch(`${import.meta.env.VITE_API_URL}/api/attendee-count`)
       .then(r => r.json())
       .then(data => setNextNumber(data.count + 1))
       .catch(() => {});
@@ -48,7 +48,7 @@ const CheckInForm = () => {
     try {
       const normalizedEmail = email.toLowerCase().trim();
 
-      const res = await fetch('http://localhost:3001/api/attendees', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/attendees`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
