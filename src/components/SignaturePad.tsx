@@ -6,7 +6,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowRight, RefreshCw } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useCustomToast } from "@/hooks/use-custom-toast";
-import { supabase } from "@/integrations/supabase/client";
 
 const SignaturePad = () => {
   const [searchParams] = useSearchParams();
@@ -73,18 +72,19 @@ const SignaturePad = () => {
         throw new Error("Email is required");
       }
 
-      // Get signature as SVG
       const signatureSvg = signaturePadRef.current?.toDataURL("image/svg+xml");
 
-      const { error } = await supabase
-        .from("attendees")
-        .update({
+      const res = await fetch('http://localhost:3001/api/sign-waiver', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
           signature_svg: signatureSvg,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("email", email);
+          furniture_acknowledged: furnitureAcknowledgment,
+        }),
+      });
 
-      if (error) throw error;
+      if (!res.ok) throw new Error('Failed to save waiver');
 
       // Show success toast
       toast.encouragement({

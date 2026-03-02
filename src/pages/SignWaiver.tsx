@@ -18,8 +18,8 @@ const SignWaiver = () => {
   return (
     <CheckInLayout
       step={2}
-      title="✍️"
-      subtitle="Just a quick paw-thentication"
+      title="🎿"
+      subtitle="Sign the waiver, then hit the slopes"
       totalSteps={2}
     >
       <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-sm overflow-y-scroll max-h-[50vh] text-sm border border-gray-200">
